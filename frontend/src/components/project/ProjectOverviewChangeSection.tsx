@@ -81,6 +81,37 @@ export const ProjectOverviewChangeSection = ({ showSlugField = false }: Props) =
       });
     }
   };
+  
+  const [canCopy, setCanCopy] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (!navigator.clipboard) {
+      setCanCopy(false);
+      setErrorMessage("Clipboard API is not supported in this browser.");
+    } else if (window.location.protocol !== "https:") {
+      setCanCopy(false);
+      setErrorMessage("Clipboard API requires HTTPS to function.");
+    }
+  }, []);
+
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      createNotification({
+        text: `Copied ${label} to clipboard`,
+        type: "success"
+      });
+    } catch (error: unknown) {
+      console.error(`Clipboard copy error (${label}):`, error);
+      const message = error instanceof Error ? error.message : "An unknown error occurred while copying.";
+      setErrorMessage(message);
+      createNotification({
+        text: `Failed to copy ${label}: ${message}`,
+        type: "error"
+      });
+    }
+  };
 
   const [canCopy, setCanCopy] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -125,8 +156,9 @@ export const ProjectOverviewChangeSection = ({ showSlugField = false }: Props) =
             disabled={!canCopy}
             title={!canCopy ? errorMessage : "Click to copy project slug"}
           >
-            Copy Project Slug
+            {canCopy ? "Copy Project Slug" : "Clipboard Unavailable"}
           </Button>
+
           <Button
             variant="outline_bg"
             size="sm"
@@ -134,7 +166,7 @@ export const ProjectOverviewChangeSection = ({ showSlugField = false }: Props) =
             disabled={!canCopy}
             title={!canCopy ? errorMessage : "Click to copy project ID"}
           >
-            Copy Project ID
+            {canCopy ? "Copy Project ID" : "Clipboard Unavailable"}
           </Button>
         </div>
       </div>
